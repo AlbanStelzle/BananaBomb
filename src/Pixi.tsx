@@ -1,40 +1,48 @@
-import {BlurFilter} from 'pixi.js';
-import {Container, Sprite, Stage, Text} from '@pixi/react';
-import {useEffect, useMemo, useState} from 'react';
+import {Sprite, Stage, TilingSprite} from '@pixi/react';
+import React, {useEffect, useState} from 'react';
 
 export const Pixi = () => {
-    const blurFilter = useMemo(() => new BlurFilter(4), []);
 
     const [x, setX] = useState(0);
     const [y, setY] = useState(0);
-    const [width, setWidth] = useState(400);
-    const [height, setHeight] = useState(330);
+
+    const [cMap, setcMap] = useState(416);
+
 
     useEffect(() => {
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'z')
-                setY(y => y - 10);
-            if (e.key === 's')
-                setY(y => y + 10);
-            if (e.key === 'q')
-                setX(x => x - 10);
-            if (e.key === 'd')
-                setX(x => x + 10);
+            if (e.key === 'z' && y >= 16)
+                setY(y => y - 16);
+            if (e.key === 's' && y <= cMap)
+                setY(y => y + 16);
+            if (e.key === 'q' && x >= 0)
+                setX(x => x - 16);
+            if (e.key === 'd' && x <= cMap)
+                setX(x => x + 16);
         });
     }, []);
 
 
     return (
-        <Stage>
+        <Stage
+            width={cMap}
+            height={cMap}>
+
+            <TilingSprite
+                image={'/src/assets/Text_tile.png'}
+                width={cMap}
+                height={cMap}
+                tilePosition={{x: 0, y: 0}}
+                tileScale={{x: 1, y: 1}}
+            />
             <Sprite
                 image="https://pixijs.io/pixi-react/img/bunny.png"
                 x={x}
                 y={y}
-                anchor={{x: 0.5, y: 0.5}}
+                width={32}
+                height={32}
+                anchor={{x: 0, y: 0}}
             />
-            <Container x={width} y={height}>
-                <Text text="Hello World" anchor={{x: 0.5, y: 0.5}} filters={[blurFilter]}/>
-            </Container>
         </Stage>
     );
 };
