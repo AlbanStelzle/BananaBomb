@@ -1,8 +1,7 @@
-import './App.css'
-import { Pixi } from './Pixi'
-function App() {
+import Game from "./components/Game";
 
-  return <Pixi/>;
+function App() {
+  return <Game />;
 }
 
 export default App
