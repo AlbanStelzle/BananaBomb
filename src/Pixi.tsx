@@ -3,25 +3,46 @@ import React, {useEffect, useState} from 'react';
 
 export const Pixi = () => {
 
+    //Position du joueur
     const [x, setX] = useState(0);
     const [y, setY] = useState(0);
 
+    //Taille d'un côté de la map (cxc)
     const [cMap, setcMap] = useState(416);
 
-
+    // Gère les mouvements du joueurs
     useEffect(() => {
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'z' && y >= 16)
-                setY(y => y - 16);
-            if (e.key === 's' && y <= cMap)
-                setY(y => y + 16);
-            if (e.key === 'q' && x >= 0)
-                setX(x => x - 16);
-            if (e.key === 'd' && x <= cMap)
-                setX(x => x + 16);
+            if (e.key === 'z') {
+                setY(y => {
+                        if (y > 0)
+                            return y - 16;
+                        return y;
+                    }
+                );
+            }
+            if (e.key === 's') {
+                setY(y => {
+                        if (y < cMap - 32)
+                            return y + 16
+                        return y
+                    }
+                );
+            }
+            if (e.key === 'q')
+                setX(x => {
+                    if (x > 0)
+                        return x - 16
+                    return x
+                });
+            if (e.key === 'd')
+                setX(x => {
+                    if (x < cMap - 32)
+                        return x + 16
+                    return x
+                });
         });
     }, []);
-
 
     return (
         <Stage
