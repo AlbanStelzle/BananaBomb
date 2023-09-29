@@ -1,7 +1,13 @@
 import { Sprite, Stage, TilingSprite } from "@pixi/react";
 import { useEffect, useMemo, useState } from "react";
 
-import { MAP_SIZE, TILE_SIZE, WALLS, BOMB_DELAY } from "../constants";
+import {
+    MAP_SIZE,
+    TILE_SIZE,
+    WALLS,
+    BOMB_DELAY,
+    EXPLOSION_DELAY,
+} from "../constants";
 import Wall from "./Wall";
 import Bomb from "./Bomb";
 import Explosion from "./Explosion";
@@ -22,7 +28,6 @@ function Game() {
         );
     };
 
-    // TODO : check bombs collision
     const moveUp = () => {
         setCoords((coords) => {
             return { ...coords, y: coords.y - TILE_SIZE };
@@ -47,7 +52,6 @@ function Game() {
         });
     };
 
-    // Gère les mouvements du joueurs
     useEffect(() => {
         const handleMove = (e) => {
             if (e.key === "ArrowUp") {
@@ -83,14 +87,45 @@ function Game() {
         const handlePlantBomb = (e) => {
             if (e.key !== " ") return;
 
-            setBombs((bombs) => [...bombs, { ...coords }]);
+            const nextBomb = { ...coords };
+            setBombs((bombs) => [...bombs, nextBomb]);
 
             setTimeout(() => {
-                setBombs((bombs) =>
-                    bombs.filter(
-                        ({ x, y }) => !(x === coords.x && y === coords.y)
-                    )
-                );
+                setBombs((bombs) => {
+                    const _bombs = bombs.filter(
+                        (bomb) =>
+                            !(bomb.x === nextBomb.x && bomb.y === nextBomb.y)
+                    );
+
+                    const zones = [
+                        { x: nextBomb.x, y: nextBomb.y },
+                        { x: nextBomb.x + TILE_SIZE, y: nextBomb.y },
+                        { x: nextBomb.x - TILE_SIZE, y: nextBomb.y },
+                        { x: nextBomb.x, y: nextBomb.y + TILE_SIZE },
+                        { x: nextBomb.x, y: nextBomb.y - TILE_SIZE },
+                    ];
+
+                    setExplosions((_explosions) => {
+                        const explosionsWithZones = [..._explosions, ...zones];
+
+                        setTimeout(() => {
+                            setExplosions((_explosions) => {
+                                return _explosions.filter(
+                                    (explosion) =>
+                                        !zones.some(
+                                            (zone) =>
+                                                zone.x === explosion.x &&
+                                                zone.y === explosion.y
+                                        )
+                                );
+                            });
+                        }, EXPLOSION_DELAY);
+
+                        return explosionsWithZones;
+                    });
+
+                    return _bombs;
+                });
             }, BOMB_DELAY);
         };
 
@@ -103,48 +138,13 @@ function Game() {
         };
     }, [coords, coords.x, coords.y, bombs]);
 
-    useEffect(() => {
-        if (bombs.length === 0) return;
-
-        const zones = [
-            { x: coords.x, y: coords.y },
-            { x: coords.x + TILE_SIZE, y: coords.y },
-            { x: coords.x - TILE_SIZE, y: coords.y },
-            { x: coords.x, y: coords.y + TILE_SIZE },
-            { x: coords.x, y: coords.y - TILE_SIZE }
-        ];
-
-        setTimeout(() => {
-            setExplosions((_explosions) => { 
-                // if player is in explosion zone
-                if (zones.some(({ x, y }) => x === coords.x && y === coords.y)) {
-                    console.log("dead");
-                }
-
-                return [..._explosions, ...zones];
-            });
-        }, BOMB_DELAY);
-
-        // clear explosions
-        setTimeout(() => {
-            setExplosions((_explosions) => {
-                return _explosions.filter(
-                    ({ x, y }) =>
-                        !zones.some(
-                            (zone) => zone.x === x && zone.y === y
-                        )
-                );
-            });
-        }, BOMB_DELAY * 1.5);
-    }, [bombs]);
-
     if (gameOver) {
         return (
             <div>
                 <h1>Game Over</h1>
                 <button onClick={() => setGameOver(false)}>Rejouer</button>
             </div>
-        )
+        );
     }
 
     return (
