@@ -21,6 +21,13 @@ function Game() {
 
     const walls = useMemo(() => WALLS, []);
 
+    const resetGame = () => {
+        setCoords({ x: 0, y: 0 });
+        setBombs([]);
+        setExplosions([]);
+        setGameOver(false);
+    }
+
     const checkCollision = (coords: { x: number; y: number }) => {
         return (
             walls.some((wall) => wall.x === coords.x && wall.y === coords.y) ||
@@ -138,11 +145,24 @@ function Game() {
         };
     }, [coords, coords.x, coords.y, bombs]);
 
+    // check if player is on explosion
+    useEffect(() => {
+        if (
+            explosions.some(
+                (explosion) =>
+                    explosion.x === coords.x && explosion.y === coords.y
+            )
+        ) {
+            setGameOver(true);
+        }
+    }, [coords, explosions]);
+
+    // TODO : good UI
     if (gameOver) {
         return (
             <div>
                 <h1>Game Over</h1>
-                <button onClick={() => setGameOver(false)}>Rejouer</button>
+                <button onClick={resetGame}>Rejouer</button>
             </div>
         );
     }
@@ -162,14 +182,6 @@ function Game() {
                 <Bomb key={index} x={bomb.x} y={bomb.y} />
             ))}
 
-            {explosions.map((explosion, index) => (
-                <Explosion key={index} x={explosion.x} y={explosion.y} />
-            ))}
-
-            {walls.map((wall, index) => (
-                <Wall key={index} x={wall.x} y={wall.y} />
-            ))}
-
             {/* Player */}
             <Sprite
                 image={"/src/assets/Monkey_Front_1.png"}
@@ -179,6 +191,14 @@ function Game() {
                 height={TILE_SIZE}
                 anchor={{ x: 0, y: 0 }}
             />
+
+            {explosions.map((explosion, index) => (
+                <Explosion key={index} x={explosion.x} y={explosion.y} />
+            ))}
+
+            {walls.map((wall, index) => (
+                <Wall key={index} x={wall.x} y={wall.y} />
+            ))}
         </Stage>
     );
 }
