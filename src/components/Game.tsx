@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Sprite, Stage, TilingSprite } from "@pixi/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -11,6 +12,12 @@ import {
 import Wall from "./Wall";
 import Bomb from "./Bomb";
 import Explosion from "./Explosion";
+=======
+import {Sprite, Stage, TilingSprite} from "@pixi/react";
+import {useEffect, useState} from "react";
+
+import {MAP_SIZE, TILE_SIZE} from "../constants";
+>>>>>>> 11e1cf5 (Ajout du singe de dos + damier v0.2)
 
 function Game() {
     // Position du joueur
@@ -168,14 +175,16 @@ function Game() {
     }
 
     return (
-        <Stage width={MAP_SIZE} height={MAP_SIZE}>
-            {/* Grid */}
+        <Stage
+            width={MAP_SIZE}
+            height={MAP_SIZE}
+        >
             <TilingSprite
                 image={"/src/assets/damier.png"}
                 width={MAP_SIZE}
                 height={MAP_SIZE}
-                tilePosition={{ x: 0, y: 0 }}
-                tileScale={{ x: 1, y: 1 }}
+                tilePosition={{x: 0, y: 0}}
+                tileScale={{x: 1, y: 1}}
             />
 
             {bombs.map((bomb, index) => (
@@ -184,12 +193,12 @@ function Game() {
 
             {/* Player */}
             <Sprite
-                image={"/src/assets/Monkey_Front_1.png"}
+                image={"/src/assets/Singe_1.png"}
                 x={coords.x}
                 y={coords.y}
                 width={TILE_SIZE}
                 height={TILE_SIZE}
-                anchor={{ x: 0, y: 0 }}
+                anchor={{x: 0, y: 0}}
             />
 
             {explosions.map((explosion, index) => (
