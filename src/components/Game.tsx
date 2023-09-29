@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Sprite, Stage, TilingSprite } from "@pixi/react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -12,12 +11,6 @@ import {
 import Wall from "./Wall";
 import Bomb from "./Bomb";
 import Explosion from "./Explosion";
-=======
-import {Sprite, Stage, TilingSprite} from "@pixi/react";
-import {useEffect, useState} from "react";
-
-import {MAP_SIZE, TILE_SIZE} from "../constants";
->>>>>>> 11e1cf5 (Ajout du singe de dos + damier v0.2)
 
 function Game() {
     // Position du joueur
