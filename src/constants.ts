@@ -2,8 +2,8 @@ export const GRID_SIZE = 13;
 export const TILE_SIZE = 32;
 export const MAP_SIZE = GRID_SIZE * TILE_SIZE;
 export const BOMB_DELAY = 2000;
-export const EXPLOSION_DELAY = 1500;
-export const WALLS = [
+export const EXPLOSION_DELAY = 1000;
+export const BLOCKS = [
     { x: TILE_SIZE * 1, y: TILE_SIZE },
     { x: TILE_SIZE * 3, y: TILE_SIZE },
     { x: TILE_SIZE * 5, y: TILE_SIZE },
