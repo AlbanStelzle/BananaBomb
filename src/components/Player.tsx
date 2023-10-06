@@ -1,10 +1,10 @@
 import { Sprite } from "@pixi/react";
 import { TILE_SIZE } from "../constants";
 
-function Wall({x, y}: { x: number, y: number }) {
+function Player({ x, y }: { x: number; y: number }) {
     return (
         <Sprite
-            image={"/src/assets/bloc.png"}
+            image={"/src/assets/Singe_1.png"}
             x={x}
             y={y}
             width={TILE_SIZE}
@@ -14,4 +14,4 @@ function Wall({x, y}: { x: number, y: number }) {
     );
 }
 
-export default Wall;
+export default Player;

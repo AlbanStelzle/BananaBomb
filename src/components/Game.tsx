@@ -1,164 +1,218 @@
-import { Sprite, Stage, TilingSprite } from "@pixi/react";
-import { useEffect, useMemo, useState } from "react";
-
+import { Stage, TilingSprite } from "@pixi/react";
+import { useEffect, useReducer, useCallback, useMemo } from "react";
 import {
     MAP_SIZE,
     TILE_SIZE,
-    WALLS,
+    BLOCKS,
     BOMB_DELAY,
     EXPLOSION_DELAY,
 } from "../constants";
-import Wall from "./Wall";
+import Block from "./Block";
 import Bomb from "./Bomb";
 import Explosion from "./Explosion";
+import Player from "./Player";
+import Bot from "./Bot";
+import getBotMovement from "../http/getBotMovement";
+
+const initialState = {
+    coords: { x: 0, y: 0 },
+    botCoords: { x: MAP_SIZE - TILE_SIZE, y: MAP_SIZE - TILE_SIZE },
+    bombs: [],
+    explosions: [],
+    gameOver: false
+};
+
+const botActionType = {
+    MOVE_BOT: "MOVE_BOT"
+};
+
+function reducer(state, action) {
+    switch (action.type) {
+        case "SET_COORDS":
+            return { ...state, coords: action.payload };
+        case botActionType.MOVE_BOT:
+            return { ...state, botCoords: action.payload };
+        case "ADD_BOMB":
+            return { ...state, bombs: [...state.bombs, action.payload] };
+        case "REMOVE_BOMB":
+            return { ...state, bombs: state.bombs.filter(bomb => !(bomb.x === action.payload.x && bomb.y === action.payload.y)) };
+        case "ADD_EXPLOSION":
+            return { ...state, explosions: [...state.explosions, ...action.payload] };
+        case "REMOVE_EXPLOSIONS":
+            return { ...state, explosions: state.explosions.filter(explosion => !action.payload.some(zone => zone.x === explosion.x && zone.y === explosion.y)) };
+        case "SET_GAME_OVER":
+            return { ...state, gameOver: true };
+        case "SET_GAME_WIN":
+            return { ...state, wonGame: true };
+        case "RESET_GAME":
+            return initialState;
+        default:
+            throw new Error();
+    }
+}
 
 function Game() {
-    // Position du joueur
-    const [coords, setCoords] = useState({ x: 0, y: 0 });
-    const [bombs, setBombs] = useState([]);
-    const [explosions, setExplosions] = useState([]);
-    const [gameOver, setGameOver] = useState(false);
+    const [state, dispatch] = useReducer(reducer, initialState);
 
-    const walls = useMemo(() => WALLS, []);
+    const blocks = useMemo(() => BLOCKS, []);
 
-    const resetGame = () => {
-        setCoords({ x: 0, y: 0 });
-        setBombs([]);
-        setExplosions([]);
-        setGameOver(false);
-    }
+    const resetGame = useCallback(() => {
+        dispatch({ type: "RESET_GAME" });
+    }, []);
 
-    const checkCollision = (coords: { x: number; y: number }) => {
-        return (
-            walls.some((wall) => wall.x === coords.x && wall.y === coords.y) ||
-            bombs.some((bomb) => bomb.x === coords.x && bomb.y === coords.y)
-        );
-    };
+    const checkCollision = useCallback(
+        (coords) => {
+            return (
+                blocks.some(
+                    (block) => block.x === coords.x && block.y === coords.y
+                ) ||
+                state.bombs.some(
+                    (bomb) => bomb.x === coords.x && bomb.y === coords.y
+                )
+            );
+        },
+        [blocks, state.bombs]
+    );
 
-    const moveUp = () => {
-        setCoords((coords) => {
-            return { ...coords, y: coords.y - TILE_SIZE };
+    const moveBot = useCallback(() => {
+        const { x: botX, y: botY } = state.botCoords;
+        const possibleMoves = [
+            { x: botX, y: botY - TILE_SIZE },
+            { x: botX, y: botY + TILE_SIZE },
+            { x: botX - TILE_SIZE, y: botY },
+            { x: botX + TILE_SIZE, y: botY },
+        ];
+
+        
+
+        // const validMoves = possibleMoves.filter(move =>
+        //     !checkCollision(move) &&
+        //     move.x >= 0 &&
+        //     move.y >= 0 &&
+        //     move.x <= MAP_SIZE - TILE_SIZE &&
+        //     move.y <= MAP_SIZE - TILE_SIZE
+        // );
+
+        // if (validMoves.length > 0) {
+        //     const randomIndex = Math.floor(Math.random() * validMoves.length);
+        //     const newBotCoords = validMoves[randomIndex];
+        //     dispatch({ type: botActionType.MOVE_BOT, payload: newBotCoords });
+        // }
+        getBotMovement({ state, checkCollision }).then((payload) => {
+            const { action } = payload;
+
+            if (action === "BOMB") {
+                const newBomb = { ...state.botCoords };
+                dispatch({ type: "ADD_BOMB", payload: newBomb });
+                setTimeout(() => {
+                    dispatch({ type: "REMOVE_BOMB", payload: newBomb });
+                    const zones = [
+                        { x: newBomb.x, y: newBomb.y },
+                        { x: newBomb.x + TILE_SIZE, y: newBomb.y },
+                        { x: newBomb.x - TILE_SIZE, y: newBomb.y },
+                        { x: newBomb.x, y: newBomb.y + TILE_SIZE },
+                        { x: newBomb.x, y: newBomb.y - TILE_SIZE },
+                    ];
+                    dispatch({ type: "ADD_EXPLOSION", payload: zones });
+                    setTimeout(() => {
+                        dispatch({ type: "REMOVE_EXPLOSIONS", payload: zones });
+                    }, EXPLOSION_DELAY);
+                }, BOMB_DELAY);
+            } else if (action === "MOVE") {
+                dispatch({ type: botActionType.MOVE_BOT, payload: payload.newBotCoords });
+            }
         });
-    };
+    }, [state.botCoords, checkCollision]);
 
-    const moveDown = () => {
-        setCoords((coords) => {
-            return { ...coords, y: coords.y + TILE_SIZE };
-        });
-    };
+    const handleMove = useCallback((e) => {
+        const { x, y } = state.coords;
+        let newCoords = null;
+        switch (e.key) {
+            case "ArrowUp":
+                newCoords = { x, y: y - TILE_SIZE };
+                break;
+            case "ArrowDown":
+                newCoords = { x, y: y + TILE_SIZE };
+                break;
+            case "ArrowLeft":
+                newCoords = { x: x - TILE_SIZE, y };
+                break;
+            case "ArrowRight":
+                newCoords = { x: x + TILE_SIZE, y };
+                break;
+            default:
+                return;
+        }
+        if (
+            newCoords &&
+            !checkCollision(newCoords) &&
+            newCoords.x >= 0 &&
+            newCoords.y >= 0 &&
+            newCoords.x <= MAP_SIZE - TILE_SIZE &&
+            newCoords.y <= MAP_SIZE - TILE_SIZE
+        ) {
+            dispatch({ type: "SET_COORDS", payload: newCoords });
+        }
+    }, [state.coords, checkCollision]);
 
-    const moveLeft = () => {
-        setCoords((coords) => {
-            return { ...coords, x: coords.x - TILE_SIZE };
-        });
-    };
-
-    const moveRight = () => {
-        setCoords((coords) => {
-            return { ...coords, x: coords.x + TILE_SIZE };
-        });
-    };
+    const handlePlantBomb = useCallback((e) => {
+        if (e.key !== " ") return;
+        const newBomb = { ...state.coords };
+        dispatch({ type: "ADD_BOMB", payload: newBomb });
+        setTimeout(() => {
+            dispatch({ type: "REMOVE_BOMB", payload: newBomb });
+            const zones = [
+                { x: newBomb.x, y: newBomb.y },
+                { x: newBomb.x + TILE_SIZE, y: newBomb.y },
+                { x: newBomb.x - TILE_SIZE, y: newBomb.y },
+                { x: newBomb.x, y: newBomb.y + TILE_SIZE },
+                { x: newBomb.x, y: newBomb.y - TILE_SIZE },
+            ];
+            dispatch({ type: "ADD_EXPLOSION", payload: zones });
+            setTimeout(() => {
+                dispatch({ type: "REMOVE_EXPLOSIONS", payload: zones });
+            }, EXPLOSION_DELAY);
+        }, BOMB_DELAY);
+    }, [state.coords]);
 
     useEffect(() => {
-        const handleMove = (e) => {
-            if (e.key === "ArrowUp") {
-                const nextCoords = { ...coords, y: coords.y - TILE_SIZE };
-                if (nextCoords.y < 0 || checkCollision(nextCoords)) return;
-                moveUp();
-            }
-            if (e.key === "ArrowDown") {
-                const nextCoords = { ...coords, y: coords.y + TILE_SIZE };
-                if (
-                    nextCoords.y > MAP_SIZE - TILE_SIZE ||
-                    checkCollision(nextCoords)
-                )
-                    return;
-                moveDown();
-            }
-            if (e.key === "ArrowLeft") {
-                const nextCoords = { ...coords, x: coords.x - TILE_SIZE };
-                if (nextCoords.x < 0 || checkCollision(nextCoords)) return;
-                moveLeft();
-            }
-            if (e.key === "ArrowRight") {
-                const nextCoords = { ...coords, x: coords.x + TILE_SIZE };
-                if (
-                    nextCoords.x > MAP_SIZE - TILE_SIZE ||
-                    checkCollision(nextCoords)
-                )
-                    return;
-                moveRight();
-            }
-        };
+        if (state.gameOver || state.wonGame) return;
+        const botMoveInterval = setInterval(() => {
+            moveBot();
+        }, 1000); // Adjust the interval as needed
+        return () => clearInterval(botMoveInterval);
+    }, [moveBot, state.gameOver, state.wonGame]);
 
-        const handlePlantBomb = (e) => {
-            if (e.key !== " ") return;
-
-            const nextBomb = { ...coords };
-            setBombs((bombs) => [...bombs, nextBomb]);
-
-            setTimeout(() => {
-                setBombs((bombs) => {
-                    const _bombs = bombs.filter(
-                        (bomb) =>
-                            !(bomb.x === nextBomb.x && bomb.y === nextBomb.y)
-                    );
-
-                    const zones = [
-                        { x: nextBomb.x, y: nextBomb.y },
-                        { x: nextBomb.x + TILE_SIZE, y: nextBomb.y },
-                        { x: nextBomb.x - TILE_SIZE, y: nextBomb.y },
-                        { x: nextBomb.x, y: nextBomb.y + TILE_SIZE },
-                        { x: nextBomb.x, y: nextBomb.y - TILE_SIZE },
-                    ];
-
-                    setExplosions((_explosions) => {
-                        const explosionsWithZones = [..._explosions, ...zones];
-
-                        setTimeout(() => {
-                            setExplosions((_explosions) => {
-                                return _explosions.filter(
-                                    (explosion) =>
-                                        !zones.some(
-                                            (zone) =>
-                                                zone.x === explosion.x &&
-                                                zone.y === explosion.y
-                                        )
-                                );
-                            });
-                        }, EXPLOSION_DELAY);
-
-                        return explosionsWithZones;
-                    });
-
-                    return _bombs;
-                });
-            }, BOMB_DELAY);
-        };
-
+    useEffect(() => {
+        if (state.gameOver || state.wonGame) return;
         window.addEventListener("keydown", handleMove);
         window.addEventListener("keypress", handlePlantBomb);
-
         return () => {
             window.removeEventListener("keypress", handlePlantBomb);
             window.removeEventListener("keydown", handleMove);
         };
-    }, [coords, coords.x, coords.y, bombs]);
+    }, [handleMove, handlePlantBomb, state.gameOver, state.wonGame]);
 
-    // check if player is on explosion
     useEffect(() => {
         if (
-            explosions.some(
+            state.explosions.some(
                 (explosion) =>
-                    explosion.x === coords.x && explosion.y === coords.y
+                    explosion.x === state.coords.x && explosion.y === state.coords.y
             )
         ) {
-            setGameOver(true);
+            dispatch({ type: "SET_GAME_OVER" });
+            return;
         }
-    }, [coords, explosions]);
 
-    // TODO : good UI
-    if (gameOver) {
+        if (state.explosions.some(
+            (explosion) =>
+                explosion.x === state.botCoords.x && explosion.y === state.botCoords.y
+        )) {
+            dispatch({ type: "SET_GAME_WIN" });
+        }
+    }, [state.coords, state.explosions, state.botCoords]);
+
+    if (state.gameOver) {
         return (
             <div>
                 <h1>Game Over</h1>
@@ -167,11 +221,17 @@ function Game() {
         );
     }
 
+    if (state.wonGame) {
+        return (
+            <div>
+                <h1>Vous avez gagné</h1>
+                <button onClick={resetGame}>Rejouer</button>
+            </div>
+        );
+    }
+
     return (
-        <Stage
-            width={MAP_SIZE}
-            height={MAP_SIZE}
-        >
+        <Stage width={MAP_SIZE} height={MAP_SIZE}>
             <TilingSprite
                 image={"/src/assets/damier.png"}
                 width={MAP_SIZE}
@@ -179,27 +239,16 @@ function Game() {
                 tilePosition={{x: 0, y: 0}}
                 tileScale={{x: 1, y: 1}}
             />
-
-            {bombs.map((bomb, index) => (
+            {state.bombs.map((bomb, index) => (
                 <Bomb key={index} x={bomb.x} y={bomb.y} />
             ))}
-
-            {/* Player */}
-            <Sprite
-                image={"/src/assets/Singe_1.png"}
-                x={coords.x}
-                y={coords.y}
-                width={TILE_SIZE}
-                height={TILE_SIZE}
-                anchor={{x: 0, y: 0}}
-            />
-
-            {explosions.map((explosion, index) => (
+            <Player x={state.coords.x} y={state.coords.y} />
+            <Bot x={state.botCoords.x} y={state.botCoords.y} />
+            {state.explosions.map((explosion, index) => (
                 <Explosion key={index} x={explosion.x} y={explosion.y} />
             ))}
-
-            {walls.map((wall, index) => (
-                <Wall key={index} x={wall.x} y={wall.y} />
+            {blocks.map((block, index) => (
+                <Block key={index} x={block.x} y={block.y} />
             ))}
         </Stage>
     );
