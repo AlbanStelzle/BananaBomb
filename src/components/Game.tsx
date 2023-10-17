@@ -4,6 +4,7 @@ import {
     MAP_SIZE,
     TILE_SIZE,
     BLOCKS,
+    BRICKS,
     BOMB_DELAY,
     EXPLOSION_DELAY,
 } from "../constants";
@@ -51,6 +52,19 @@ function reducer(state, action) {
     }
 }
 
+function setBrick(board : BlockType[][]){
+    const size = 13;
+    for (let i = 0; i < size; i++) {
+        for (let j = 0; j < size; j++) {
+            if (board[i][j] === BlockType.Breakable){
+            /*{bricks.map((brick, index) => (*/
+            <Brique x= {i} y= {j} />
+        }
+    }
+}
+}
+
+ 
 function Game() {
     const [state, dispatch] = useReducer(reducer, initialState);
 
