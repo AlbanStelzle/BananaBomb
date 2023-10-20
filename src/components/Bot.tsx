@@ -4,7 +4,7 @@ import { TILE_SIZE } from "../constants";
 function Bot({ x, y }: { x: number; y: number }) {
     return (
         <Sprite
-            image={"/src/assets/face_bot.png"}
+            image={"/face_bot.png"}
             x={x}
             y={y}
             width={TILE_SIZE}

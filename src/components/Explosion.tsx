@@ -4,7 +4,7 @@ import { TILE_SIZE } from "../constants";
 function Explosion({x, y}: { x: number, y: number }) {
     return (
         <Sprite
-            image={"/src/assets/explosion.png"}
+            image={"/explosion.png"}
             x={x}
             y={y}
             width={TILE_SIZE}

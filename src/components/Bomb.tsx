@@ -4,7 +4,7 @@ import { TILE_SIZE } from "../constants";
 function Bomb({x, y}: { x: number, y: number }) {
     return (
         <Sprite
-            image={"/src/assets/banana.png"}
+            image={"/banana.png"}
             x={x}
             y={y}
             width={TILE_SIZE}

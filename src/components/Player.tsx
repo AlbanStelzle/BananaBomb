@@ -4,7 +4,7 @@ import { TILE_SIZE } from "../constants";
 function Player({ x, y }: { x: number; y: number }) {
     return (
         <Sprite
-            image={"/src/assets/Singe_1.png"}
+            image={"/Singe_1.png"}
             x={x}
             y={y}
             width={TILE_SIZE}
