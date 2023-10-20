@@ -46,3 +46,37 @@ export const BLOCKS = [
     { x: TILE_SIZE * 9, y: TILE_SIZE * 11 },
     { x: TILE_SIZE * 11, y: TILE_SIZE * 11 },
 ];
+
+export const BRICKS = _generateBricks();
+
+function _generateBricks() {
+    const CORNERS = [
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 0 },
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 1 },
+        { x: TILE_SIZE * 1, y: TILE_SIZE * 0 },
+        
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 0 },
+        { x: TILE_SIZE * 11, y: TILE_SIZE * 0 },
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 1 },
+
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 12 },
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 11 },
+        { x: TILE_SIZE * 1, y: TILE_SIZE * 12 },
+
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 12 },
+        { x: TILE_SIZE * 11, y: TILE_SIZE * 12 },
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 11 },
+    ]
+
+    const unallowedCoordinates = [...BLOCKS, ...CORNERS]
+
+    const bricks = [];
+    for (let i = 0; i < 13; i++) {
+        for (let j = 0; j < 13; j++) {
+            if (unallowedCoordinates.some((coord) => coord.x === TILE_SIZE * i && coord.y === TILE_SIZE * j)) continue;
+            bricks.push({ x: TILE_SIZE * i, y: TILE_SIZE * j });
+        }
+    }
+
+    return bricks;
+}
