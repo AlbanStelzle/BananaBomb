@@ -1,7 +1,14 @@
 import { MAP_SIZE, TILE_SIZE } from "../constants";
 
-async function getBotMovement({ state, checkCollision }) {
-    return new Promise((resolve, reject) => {
+import { State } from "../types";
+
+interface Props {
+    state: State;
+    checkCollision: (coords: { x: number; y: number }) => boolean;
+}
+
+async function getBotMovement({ state, checkCollision }: Props) {
+    return new Promise((resolve) => {
         const plantBomb = Math.random() < 0.2;
         if (plantBomb) {
             return resolve({ action: "BOMB" });

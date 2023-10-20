@@ -15,6 +15,7 @@ import Explosion from "./Explosion";
 import Player from "./Player";
 import Bot from "./Bot";
 import getBotMovement from "../http/getBotMovement";
+import { Action, Coords, State } from "../types";
 
 const initialState = {
     coords: { x: 0, y: 0 },
@@ -22,6 +23,7 @@ const initialState = {
     bombs: [],
     explosions: [],
     gameOver: false,
+    wonGame: false,
     bricks: BRICKS,
 };
 
@@ -29,7 +31,7 @@ const botActionType = {
     MOVE_BOT: "MOVE_BOT"
 };
 
-function reducer(state, action) {
+function reducer(state: State, action: Action) {
     switch (action.type) {
         case "SET_COORDS":
             return { ...state, coords: action.payload };
@@ -42,9 +44,9 @@ function reducer(state, action) {
         case "ADD_EXPLOSION":
             return { ...state, explosions: [...state.explosions, ...action.payload] };
         case "REMOVE_EXPLOSIONS":
-            return { ...state, explosions: state.explosions.filter(explosion => !action.payload.some(zone => zone.x === explosion.x && zone.y === explosion.y)) };
+            return { ...state, explosions: state.explosions.filter(explosion => !action.payload.some((zone: Coords) => zone.x === explosion.x && zone.y === explosion.y)) };
         case "REMOVE_BRICKS":
-            return { ...state, bricks: state.bricks.filter(brick => !action.payload.some(zone => zone.x === brick.x && zone.y === brick.y)) };
+            return { ...state, bricks: state.bricks.filter(brick => !action.payload.some((zone: Coords) => zone.x === brick.x && zone.y === brick.y)) };
         case "SET_GAME_OVER":
             return { ...state, gameOver: true };
         case "SET_GAME_WIN":
@@ -66,7 +68,7 @@ function Game() {
     }, []);
 
     const checkCollision = useCallback(
-        (coords) => {
+        (coords: Coords) => {
             return (
                 blocks.some(
                     (block) => block.x === coords.x && block.y === coords.y
@@ -83,7 +85,7 @@ function Game() {
     );
 
     const moveBot = useCallback(() => {
-        getBotMovement({ state, checkCollision }).then((payload) => {
+        getBotMovement({ state, checkCollision }).then((payload: any) => {
             const { action } = payload;
 
             if (action === "BOMB") {
@@ -109,7 +111,7 @@ function Game() {
         });
     }, [state.botCoords, checkCollision]);
 
-    const handleMove = useCallback((e) => {
+    const handleMove = useCallback((e: KeyboardEvent) => {
         const { x, y } = state.coords;
         let newCoords = null;
         switch (e.key) {
@@ -140,7 +142,7 @@ function Game() {
         }
     }, [state.coords, checkCollision]);
 
-    const handlePlantBomb = useCallback((e) => {
+    const handlePlantBomb = useCallback((e: KeyboardEvent) => {
         if (e.key !== " ") return;
         const newBomb = { ...state.coords };
         dispatch({ type: "ADD_BOMB", payload: newBomb });
@@ -236,7 +238,7 @@ function Game() {
     return (
         <Stage width={MAP_SIZE} height={MAP_SIZE}>
             <TilingSprite
-                image={"/src/assets/damier.png"}
+                image={"/damier.png"}
                 width={MAP_SIZE}
                 height={MAP_SIZE}
                 tilePosition={{x: 0, y: 0}}

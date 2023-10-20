@@ -4,7 +4,7 @@ import { TILE_SIZE } from "../constants";
 export default function Brick({x, y}: { x: number, y: number }) {
     return (
         <Sprite
-            image={"/src/assets/brick.png"}
+            image={"/brick.png"}
             x={x}
             y={y}
             width={TILE_SIZE}
