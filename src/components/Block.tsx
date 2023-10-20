@@ -1,10 +1,10 @@
 import { Sprite } from "@pixi/react";
 import { TILE_SIZE } from "../constants";
 
-function Block({x, y}: { x: number, y: number }) {
+export default function Block({x, y}: { x: number, y: number }) {
     return (
         <Sprite
-            image={"/src/assets/bloc.png"}
+            image={"/src/assets/block.png"}
             x={x}
             y={y}
             width={TILE_SIZE}
@@ -13,5 +13,3 @@ function Block({x, y}: { x: number, y: number }) {
         />
     );
 }
-
-export default Block;
