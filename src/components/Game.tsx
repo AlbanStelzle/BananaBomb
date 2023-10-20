@@ -21,7 +21,8 @@ const initialState = {
     botCoords: { x: MAP_SIZE - TILE_SIZE, y: MAP_SIZE - TILE_SIZE },
     bombs: [],
     explosions: [],
-    gameOver: false
+    gameOver: false,
+    bricks: BRICKS,
 };
 
 const botActionType = {
@@ -42,6 +43,8 @@ function reducer(state, action) {
             return { ...state, explosions: [...state.explosions, ...action.payload] };
         case "REMOVE_EXPLOSIONS":
             return { ...state, explosions: state.explosions.filter(explosion => !action.payload.some(zone => zone.x === explosion.x && zone.y === explosion.y)) };
+        case "REMOVE_BRICKS":
+            return { ...state, bricks: state.bricks.filter(brick => !action.payload.some(zone => zone.x === brick.x && zone.y === brick.y)) };
         case "SET_GAME_OVER":
             return { ...state, gameOver: true };
         case "SET_GAME_WIN":
@@ -57,7 +60,6 @@ function Game() {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     const blocks = useMemo(() => BLOCKS, []);
-    const bricks = useMemo(() => BRICKS, []);
 
     const resetGame = useCallback(() => {
         dispatch({ type: "RESET_GAME" });
@@ -69,38 +71,18 @@ function Game() {
                 blocks.some(
                     (block) => block.x === coords.x && block.y === coords.y
                 ) ||
+                state.bricks.some(
+                    (block) => block.x === coords.x && block.y === coords.y
+                ) ||
                 state.bombs.some(
                     (bomb) => bomb.x === coords.x && bomb.y === coords.y
                 )
             );
         },
-        [blocks, state.bombs]
+        [blocks, state.bricks, state.bombs]
     );
 
     const moveBot = useCallback(() => {
-        const { x: botX, y: botY } = state.botCoords;
-        const possibleMoves = [
-            { x: botX, y: botY - TILE_SIZE },
-            { x: botX, y: botY + TILE_SIZE },
-            { x: botX - TILE_SIZE, y: botY },
-            { x: botX + TILE_SIZE, y: botY },
-        ];
-
-        
-
-        // const validMoves = possibleMoves.filter(move =>
-        //     !checkCollision(move) &&
-        //     move.x >= 0 &&
-        //     move.y >= 0 &&
-        //     move.x <= MAP_SIZE - TILE_SIZE &&
-        //     move.y <= MAP_SIZE - TILE_SIZE
-        // );
-
-        // if (validMoves.length > 0) {
-        //     const randomIndex = Math.floor(Math.random() * validMoves.length);
-        //     const newBotCoords = validMoves[randomIndex];
-        //     dispatch({ type: botActionType.MOVE_BOT, payload: newBotCoords });
-        // }
         getBotMovement({ state, checkCollision }).then((payload) => {
             const { action } = payload;
 
@@ -207,6 +189,24 @@ function Game() {
             return;
         }
 
+        // Check if brick is in explosion zone
+        const explodedBricks = state.bricks.filter((brick) =>
+            state.explosions.some(
+                (explosion) => explosion.x === brick.x && explosion.y === brick.y
+            )
+        );
+
+        // Remove exploded bricks
+        if (explodedBricks.length > 0) {
+            dispatch({
+                type: "REMOVE_BRICKS",
+                payload: explodedBricks.map((brick) => ({
+                    x: brick.x,
+                    y: brick.y,
+                })),
+            });
+        }
+
         if (state.explosions.some(
             (explosion) =>
                 explosion.x === state.botCoords.x && explosion.y === state.botCoords.y
@@ -253,7 +253,7 @@ function Game() {
             {blocks.map((block, index) => (
                 <Block key={index} x={block.x} y={block.y} />
             ))}
-            {bricks.map((brick, index) => (
+            {state.bricks.map((brick, index) => (
                 <Brick key={index} x={brick.x} y={brick.y} />
             ))}
         </Stage>
