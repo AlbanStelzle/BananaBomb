@@ -47,47 +47,36 @@ export const BLOCKS = [
     { x: TILE_SIZE * 11, y: TILE_SIZE * 11 },
 ];
 
-export enum BlockType {
-    Empty,
-    Unbreakable,
-    Breakable
-}
+export const BRICKS = _generateBricks();
 
-function initializeBoard(): BlockType[][] {
-    const size = 13;
-    const board: BlockType[][] = Array.from({ length: size }, () => Array(size).fill(BlockType.Empty));
+function _generateBricks() {
+    const CORNERS = [
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 0 },
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 1 },
+        { x: TILE_SIZE * 1, y: TILE_SIZE * 0 },
+        
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 0 },
+        { x: TILE_SIZE * 11, y: TILE_SIZE * 0 },
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 1 },
 
-    /* Placement des blocs inamovibles
-    for (let i = 0; i < size; i += 2) {
-        for (let j = 0; j < size; j += 2) {
-            board[i][j] = BlockType.Unbreakable;
-        }
-    } */
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 12 },
+        { x: TILE_SIZE * 0, y: TILE_SIZE * 11 },
+        { x: TILE_SIZE * 1, y: TILE_SIZE * 12 },
 
-    // Zones vides autour des coins pour les personnages
-    const clearAround = (x: number, y: number) => {
-        board[x][y] = BlockType.Empty;
-        board[x + 1][y] = BlockType.Empty;
-        board[x][y + 1] = BlockType.Empty;
-    }
-    clearAround(0, 0);
-    clearAround(0, size - 1);
-    clearAround(size - 1, 0);
-    clearAround(size - 1, size - 1);
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 12 },
+        { x: TILE_SIZE * 11, y: TILE_SIZE * 12 },
+        { x: TILE_SIZE * 12, y: TILE_SIZE * 11 },
+    ]
 
-    // Placement aléatoire des blocs cassables
-    for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-            if (board[i][j] === BlockType.Empty) {
-                const random = Math.random();
-                if (random < 0.5) {
-                    board[i][j] = BlockType.Breakable;
-                }
-            }
+    const unallowedCoordinates = [...BLOCKS, ...CORNERS]
+
+    const bricks = [];
+    for (let i = 0; i < 13; i++) {
+        for (let j = 0; j < 13; j++) {
+            if (unallowedCoordinates.some((coord) => coord.x === TILE_SIZE * i && coord.y === TILE_SIZE * j)) continue;
+            bricks.push({ x: TILE_SIZE * i, y: TILE_SIZE * j });
         }
     }
 
-    return board;
+    return bricks;
 }
-
-export const board = initializeBoard();

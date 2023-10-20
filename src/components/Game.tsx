@@ -9,6 +9,7 @@ import {
     EXPLOSION_DELAY,
 } from "../constants";
 import Block from "./Block";
+import Brick from "./Brick";
 import Bomb from "./Bomb";
 import Explosion from "./Explosion";
 import Player from "./Player";
@@ -51,24 +52,12 @@ function reducer(state, action) {
             throw new Error();
     }
 }
-
-function setBrick(board : BlockType[][]){
-    const size = 13;
-    for (let i = 0; i < size; i++) {
-        for (let j = 0; j < size; j++) {
-            if (board[i][j] === BlockType.Breakable){
-            /*{bricks.map((brick, index) => (*/
-            <Brique x= {i} y= {j} />
-        }
-    }
-}
-}
-
  
 function Game() {
     const [state, dispatch] = useReducer(reducer, initialState);
 
     const blocks = useMemo(() => BLOCKS, []);
+    const bricks = useMemo(() => BRICKS, []);
 
     const resetGame = useCallback(() => {
         dispatch({ type: "RESET_GAME" });
@@ -263,6 +252,9 @@ function Game() {
             ))}
             {blocks.map((block, index) => (
                 <Block key={index} x={block.x} y={block.y} />
+            ))}
+            {bricks.map((brick, index) => (
+                <Brick key={index} x={brick.x} y={brick.y} />
             ))}
         </Stage>
     );
