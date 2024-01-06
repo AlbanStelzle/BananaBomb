@@ -1,5 +1,4 @@
 import { MAP_SIZE, TILE_SIZE } from "../constants";
-
 import { State } from "../types";
 
 interface Props {
