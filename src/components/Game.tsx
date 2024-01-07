@@ -1,5 +1,5 @@
 import { Stage, TilingSprite } from "@pixi/react";
-import { useEffect, useReducer, useCallback, useMemo } from "react";
+import { useEffect, useReducer, useCallback } from "react";
 import {
     MAP_SIZE,
     TILE_SIZE,
@@ -7,6 +7,9 @@ import {
     BRICKS,
     BOMB_DELAY,
     EXPLOSION_DELAY,
+    DIFFICULTY,
+    BOT_MOVES,
+    API_CALL_DELAY,
 } from "../constants";
 import Block from "./Block";
 import Brick from "./Brick";
@@ -17,6 +20,10 @@ import Bot from "./Bot";
 import getBotMovement from "../http/getBotMovement";
 import { Action, Coords, State } from "../types";
 import "../styles/game.css"
+import { formatMapForBack } from "../utils/map";
+import useInterval from "../hooks/useInterval";
+import useOnInit from "../hooks/useOnInit";
+import getBotMovements from "../http/getBotMovements";
 
 const initialState = {
     coords: { x: 0, y: 0 },
@@ -62,8 +69,6 @@ function reducer(state: State, action: Action) {
 function Game() {
     const [state, dispatch] = useReducer(reducer, initialState);
 
-    const blocks = useMemo(() => BLOCKS, []);
-
     const resetGame = useCallback(() => {
         dispatch({ type: "RESET_GAME" });
     }, []);
@@ -71,7 +76,7 @@ function Game() {
     const checkCollision = useCallback(
         (coords: Coords) => {
             return (
-                blocks.some(
+                BLOCKS.some(
                     (block) => block.x === coords.x && block.y === coords.y
                 ) ||
                 state.bricks.some(
@@ -82,38 +87,77 @@ function Game() {
                 )
             );
         },
-        [blocks, state.bricks, state.bombs]
+        [BLOCKS, state.bricks, state.bombs]
     );
 
     const moveBot = useCallback(() => {
-        getBotMovement({ state, checkCollision }).then((payload: any) => {
-            const { action } = payload;
+        getBotMovements({ state, map: formatMapForBack(state) }).then((payload: any) => {
+            let nextMoves = payload.nextMoves;
+            let latestCoords = state.botCoords;
+            
+            const botMoveInterval = setInterval(() => {
+                const { x, y } = latestCoords;
+                let newCoords = null;
 
-            if (action === "BOMB") {
-                const newBomb = { ...state.botCoords };
-                dispatch({ type: "ADD_BOMB", payload: newBomb });
-                setTimeout(() => {
-                    dispatch({ type: "REMOVE_BOMB", payload: newBomb });
-                    const zones = [
-                        { x: newBomb.x, y: newBomb.y },
-                        { x: newBomb.x + TILE_SIZE, y: newBomb.y },
-                        { x: newBomb.x - TILE_SIZE, y: newBomb.y },
-                        { x: newBomb.x, y: newBomb.y + TILE_SIZE },
-                        { x: newBomb.x, y: newBomb.y - TILE_SIZE },
-                    ];
-                    dispatch({ type: "ADD_EXPLOSION", payload: zones });
-                    setTimeout(() => {
-                        dispatch({ type: "REMOVE_EXPLOSIONS", payload: zones });
-                    }, EXPLOSION_DELAY);
-                }, BOMB_DELAY);
-            } else if (action === "MOVE") {
-                dispatch({
-                    type: botActionType.MOVE_BOT,
-                    payload: payload.newBotCoords,
-                });
-            }
+                switch (nextMoves[0]) {
+                    case BOT_MOVES.UP:
+                        newCoords = { x, y: y - TILE_SIZE };
+                        break;
+                    case BOT_MOVES.DOWN:
+                        newCoords = { x, y: y + TILE_SIZE };
+                        break;
+                    case BOT_MOVES.LEFT:
+                        newCoords = { x: x - TILE_SIZE, y };
+                        break;
+                    case BOT_MOVES.RIGHT:
+                        newCoords = { x: x + TILE_SIZE, y };
+                        break;
+                    default:
+                        return;
+                }
+
+                if (
+                    newCoords &&
+                    !checkCollision(newCoords) &&
+                    newCoords.x >= 0 &&
+                    newCoords.y >= 0 &&
+                    newCoords.x <= MAP_SIZE - TILE_SIZE &&
+                    newCoords.y <= MAP_SIZE - TILE_SIZE
+                ) {
+                    latestCoords = newCoords;
+                    dispatch({ type: "MOVE_BOT", payload: newCoords });
+                }
+
+                nextMoves = nextMoves.slice(1);
+                
+                if (nextMoves.length === 0) {
+                    clearInterval(botMoveInterval);
+                    
+                    // Plant bomb randomly
+                    const plantsBomb = Math.random() < (1 / 8);
+                    if (plantsBomb) {
+                        console.log('PLANTING BOMB')
+                        const newBomb = { ...latestCoords };
+                        dispatch({ type: "ADD_BOMB", payload: newBomb });
+                        setTimeout(() => {
+                            dispatch({ type: "REMOVE_BOMB", payload: newBomb });
+                            const zones = [
+                                { x: newBomb.x, y: newBomb.y },
+                                { x: newBomb.x + TILE_SIZE, y: newBomb.y },
+                                { x: newBomb.x - TILE_SIZE, y: newBomb.y },
+                                { x: newBomb.x, y: newBomb.y + TILE_SIZE },
+                                { x: newBomb.x, y: newBomb.y - TILE_SIZE },
+                            ];
+                            dispatch({ type: "ADD_EXPLOSION", payload: zones });
+                            setTimeout(() => {
+                                dispatch({ type: "REMOVE_EXPLOSIONS", payload: zones });
+                            }, EXPLOSION_DELAY);
+                        }, BOMB_DELAY);
+                    }
+                }
+            }, (API_CALL_DELAY / 3) - 100);
         });
-    }, [state.botCoords, checkCollision]);
+    }, [state, checkCollision]);
 
     const handleMove = useCallback(
         (e: KeyboardEvent) => {
@@ -172,13 +216,13 @@ function Game() {
         [state.coords]
     );
 
-    useEffect(() => {
+    useInterval(() => {
         if (state.gameOver || state.wonGame) return;
-        const botMoveInterval = setInterval(() => {
-            moveBot();
-        }, 1000); // Adjust the interval as needed
-        return () => clearInterval(botMoveInterval);
-    }, [moveBot, state.gameOver, state.wonGame]);
+        moveBot();
+    }, API_CALL_DELAY);
+
+    // Set the game difficulty and grid size, calling the API
+    const { id: gameId } = useOnInit();
 
     useEffect(() => {
         if (state.gameOver || state.wonGame) return;
@@ -250,7 +294,7 @@ function Game() {
                 {state.explosions.map((explosion, index) => (
                     <Explosion key={index} x={explosion.x} y={explosion.y} />
                 ))}
-                {blocks.map((block, index) => (
+                {BLOCKS.map((block, index) => (
                     <Block key={index} x={block.x} y={block.y} />
                 ))}
                 {state.bricks.map((brick, index) => (
@@ -260,13 +304,13 @@ function Game() {
             <div className="result-container">
                 {state.gameOver && (
                     <div className="game-over">
-                        <h1>Game Over</h1>
+                        <h1>Game over</h1>
                         <button onClick={resetGame}>Restart</button>
                     </div>
                 )}
                 {state.wonGame && (
                     <div className="game-over">
-                        <h1>You Win</h1>
+                        <h1>You win</h1>
                         <button onClick={resetGame}>Restart</button>
                     </div>
                 )}
