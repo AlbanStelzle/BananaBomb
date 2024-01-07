@@ -1,27 +1,37 @@
-# React + TypeScript + Vite
+# BananaBomb
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Bienvenue dans BananaBomb, un projet de Bomberman réalisé avec React, Vite, Pixi Plugin et TypeScript.
 
-Currently, two official plugins are available:
+## Présentation du jeu
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+BananaBomb est une version amusante et explosive du classique jeu Bomberman. Pour le moment, le jeu se joue en solo contre un bot utilisant l'intelligence artificielle basée sur le machine learning. Les joueurs peuvent s'affronter dans un labyrinthe, placer des bombes, éviter les explosions pour être le dernier joueur debout.
 
-## Expanding the ESLint configuration
+## Installation avec Docker
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+Assurez-vous d'avoir Docker et Docker Compose installés sur votre machine avant de commencer. Vous pouvez les télécharger et installer depuis [le site officiel de Docker](https://www.docker.com/get-started).
 
-- Configure the top-level `parserOptions` property like this:
+1. Clonez le dépôt GitHub dans le répertoire de votre choix :
+   ```bash
+   git clone https://github.com/AlbanStelzle/BananaBomb.git
+   ```
 
-```js
-   parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-   },
-```
+2. Accédez au répertoire du projet :
+   ```bash
+   cd BananaBomb
+   ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+3. Lancez l'application en utilisant Docker Compose :
+   ```bash
+   docker-compose up -d
+   ```
+
+   Cela lancera l'application et la rendra accessible sur [http://localhost:5173](http://localhost:5173). Ouvrez cette URL dans votre navigateur pour jouer à BananaBomb.
+
+## Arrêt de l'Application Docker
+
+Pour arrêter l'application, utilisez la commande suivante dans le répertoire du projet :
+   ```bash
+   docker-compose down
+   ```
+
+Amusez-vous bien avec BananaBomb ! 🍌💣
