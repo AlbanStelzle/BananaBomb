@@ -6,6 +6,7 @@ interface Props {
     checkCollision: (coords: { x: number; y: number }) => boolean;
 }
 
+// TODO : to remove
 async function getBotMovement({ state, checkCollision }: Props) {
     return new Promise((resolve) => {
         const plantBomb = Math.random() < 0.2;
